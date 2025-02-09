@@ -41,6 +41,10 @@ async function fetchTokenPrice(token, currency) {
         
         const formattedLastUpdatedPrice = `Last Updated Price: ${currency === "USD" ? "$" : "£"}${price}`;
         chrome.storage.local.set({ selectedPrice: formattedLastUpdatedPrice });
+
+        // update logo code:
+        const logoUrl = await fetchTokenLogo(token);
+        if (logoUrl) updateExtensionIcon(logoUrl);
         
         return price;
     } 
@@ -48,6 +52,51 @@ async function fetchTokenPrice(token, currency) {
         console.error("Error fetching token price:", error);
         return null;
     }
+}
+
+async function fetchTokenLogo(token) {
+    console.log(`Fetching logo for token: ${token}`);
+
+    try {
+        const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/info?symbol=${token}`;
+        const response = await fetch(url, {
+            headers: { "X-CMC_PRO_API_KEY": API_KEY }
+        });
+
+        if (!response.ok) {
+            console.error(`Logo API request failed: ${response.status} - ${response.statusText}`);
+            return null;
+        }
+
+        const data = await response.json();
+        
+        if (!data.data || !data.data[token] || !data.data[token].logo) {
+            console.error("Invalid logo response format:", data);
+            return null;
+        }
+
+        return data.data[token].logo;
+    } 
+    catch (error) {
+        console.error("Error fetching token logo:", error);
+        return null;
+    }
+}
+
+function updateExtensionIcon(logoUrl) {
+    console.log("Updating extension icon:", logoUrl);
+
+    fetch(logoUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64Image = reader.result;
+                chrome.action.setIcon({ path: base64Image });
+            };
+            reader.readAsDataURL(blob);
+        })
+        .catch(error => console.error("Error updating icon:", error));
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
