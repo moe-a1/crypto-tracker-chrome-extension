@@ -1,74 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap');
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #1e1e1e;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    color: #ddd;
 }
 
 .popup-container {
-    background-color: #fff;
+    background-color: #2a2a2a;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 280px;
     text-align: center;
-    box-sizing: border-box;
 }
 
 .popup-title {
-    font-size: 22px;
-    margin-bottom: 20px;
-    color: #333;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #fff;
 }
 
 .input-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     text-align: left;
-    padding: 0 10px;
 }
 
 .input-group label {
-    font-size: 14px;
-    margin-bottom: 5px;
-    color: #555;
+    font-size: 13px;
+    color: #bbb;
 }
 
 .input-group input,
 .input-group select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
+    width: calc(100% - 2px);
+    padding: 8px;
+    border: 1px solid #444;
     border-radius: 5px;
     font-size: 14px;
-    color: #333;
-    margin-top: 5px;
+    background-color: #333;
+    color: #ddd;
+    box-sizing: border-box;
 }
 
 .track-btn {
-    background-color: #4CAF50;
+    background-color: #007bff;
     color: white;
-    font-size: 16px;
+    font-size: 15px;
     padding: 10px;
     border: none;
     border-radius: 5px;
     width: 100%;
     cursor: pointer;
-    margin-top: 15px;
+    margin-top: 12px;
+    font-weight: 600;
 }
 
 .track-btn:hover {
-    background-color: #45a049;
+    background-color: #0056b3;
 }
 
 .price-text {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
-    color: #333;
-    margin-top: 20px;
+    color: #fff;
+    margin-top: 15px;
 }
 
 select {
@@ -76,6 +79,6 @@ select {
 }
 
 button:disabled {
-    background-color: #ccc;
+    background-color: #555;
     cursor: not-allowed;
 }
