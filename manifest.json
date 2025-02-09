@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Crypto Price Tracker",
+  "version": "1.0",
+  "description": "Track crypto token prices",
+  "permissions": ["storage"],
+  "host_permissions": ["https://pro-api.coinmarketcap.com/"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icons/default.png"
+    }
+  },
+  "icons": {
+    "128": "icons/default.png"
+  }
+}
