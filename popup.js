@@ -4,19 +4,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const currencySelect = document.getElementById("currency");
     const priceDisplay = document.getElementById("price");
 
-    const storedToken = localStorage.getItem("selectedToken");
-    const storedCurrency = localStorage.getItem("selectedCurrency");
-    const storedPrice = localStorage.getItem("selectedPrice");
-    if (storedToken) tokenInput.value = storedToken;
-    if (storedCurrency) currencySelect.value = storedCurrency;
-    if (storedPrice) priceDisplay.innerText = storedPrice;
+    chrome.storage.local.get(["selectedToken", "selectedCurrency", "selectedPrice"], (data) => {
+        if (chrome.runtime.lastError) {
+            console.error("Error retrieving data from storage:", chrome.runtime.lastError);
+            return;
+        }
 
-    let currentToken = storedToken || "";
-    let currentCurrency = storedCurrency || "USD";
-    let refreshInterval = null;
+        if (data.selectedToken) tokenInput.value = data.selectedToken;
+        if (data.selectedCurrency) currencySelect.value = data.selectedCurrency;
+        if (data.selectedPrice) priceDisplay.innerText = data.selectedPrice;
+    });
 
     function fetchPrice() {
-        if (!currentToken) return;
+        const currentToken = tokenInput.value.trim().toUpperCase();
+        const currentCurrency = currencySelect.value;
+
+        if (!currentToken) {
+            priceDisplay.innerText = "Please enter a valid token symbol.";
+            return;
+        }
+
+        chrome.storage.local.set({ selectedToken: currentToken, selectedCurrency: currentCurrency });
 
         chrome.runtime.sendMessage(
             { action: "fetchPrice", token: currentToken, currency: currentCurrency }, 
@@ -28,34 +36,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (response && response.price) {
                     console.log("Updated price:", response.price);
-                    priceDisplay.innerText = `Price: ${currentCurrency === "USD" ? "$" : "£"}${response.price}`;
-                    localStorage.setItem("selectedPrice", `Last Updated Price: ${currentCurrency === "USD" ? "$" : "£"}${response.price}`);
-                } else {
+
+                    const formattedPrice = `Price: ${currentCurrency === "USD" ? "$" : "£"}${response.price}`;
+                    chrome.storage.local.set({ selectedPrice: formattedPrice });
+                    priceDisplay.innerText = formattedPrice;
+                } 
+                else {
                     console.warn("No valid response received");
                 }
             }
         );
     }
 
-    trackButton.addEventListener("click", () => {
-        currentToken = tokenInput.value.trim().toUpperCase();
-        currentCurrency = currencySelect.value;
-        console.log("Tracking token:", currentToken, "in", currentCurrency);
+    trackButton.addEventListener("click", fetchPrice);
 
-        localStorage.setItem("selectedToken", currentToken);
-        localStorage.setItem("selectedCurrency", currentCurrency);
-
-        if (!currentToken) {
-            priceDisplay.innerText = "Please enter a valid token symbol.";
-            return;
+    chrome.storage.onChanged.addListener((changes) => {
+        if (changes.selectedPrice) {
+            priceDisplay.innerText = changes.selectedPrice.newValue;
         }
-
-        fetchPrice();
-
-        // Prevent multiple intervals
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
-        }
-        refreshInterval = setInterval(fetchPrice, 60000);
     });
 });

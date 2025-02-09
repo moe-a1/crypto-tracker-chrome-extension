@@ -4,6 +4,11 @@ const API_KEY = "XXX";
 let lastTrackedToken = null;
 let lastTrackedCurrency = "USD";
 
+chrome.storage.local.get(["selectedToken", "selectedCurrency"], (data) => {
+    if (data.selectedToken) lastTrackedToken = data.selectedToken;
+    if (data.selectedCurrency) lastTrackedCurrency = data.selectedCurrency;
+});
+
 async function fetchTokenPrice(token, currency) {
     console.log(`Fetching ${currency} price for token: ${token}`);
 
@@ -33,14 +38,9 @@ async function fetchTokenPrice(token, currency) {
 
         chrome.action.setBadgeText({ text: `${currency === "USD" ? "$" : "£"}${Math.round(price)}` });
         chrome.action.setBadgeBackgroundColor({ color: "#000" });
-
-        chrome.storage.local.set({"selectedPrice": `Last Updated Price: ${currency === "USD" ? "$" : "£"}${price}` }, () => {
-            if (chrome.runtime.lastError) {
-                console.error("Error saving to chrome.storage:", chrome.runtime.lastError);
-            } else {
-                console.log("Price saved successfully to chrome.storage.");
-            }
-        });
+        
+        const formattedLastUpdatedPrice = `Last Updated Price: ${currency === "USD" ? "$" : "£"}${price}`;
+        chrome.storage.local.set({ selectedPrice: formattedLastUpdatedPrice });
         
         return price;
     } 
@@ -57,9 +57,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         lastTrackedToken = message.token;
         lastTrackedCurrency = message.currency;
         
-        fetchTokenPrice(message.token, message.currency).then(price => {
-            sendResponse({ price });
-        }).catch(err => {
+        fetchTokenPrice(message.token, message.currency)
+        .then(price => { sendResponse({ price }); })
+        .catch(err => {
             console.error("Error in fetchTokenPrice:", err);
             sendResponse(null);
         });
@@ -68,9 +68,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-setInterval(() => {
-    if (lastTrackedToken) {
-        console.log("Refreshing price...");
+chrome.alarms.create("refreshPrice", { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "refreshPrice" && lastTrackedToken) {
+        console.log("Refreshing price via alarms...");
         fetchTokenPrice(lastTrackedToken, lastTrackedCurrency);
     }
-}, 60000);
+});
