@@ -1,3 +1,5 @@
+import { formatPriceWithCommas } from './utils.js';
+
 document.addEventListener("DOMContentLoaded", () => {
     const trackButton = document.getElementById("track");
     const tokenInput = document.getElementById("token");
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (response && response.price) {
                     console.log("Updated price:", response.price);
 
-                    const formattedPrice = `Price: ${currentCurrency === "USD" ? "$" : "£"}${response.price}`;
+                    const formattedPrice = `Price: ${currentCurrency === "USD" ? "$" : "£"}${formatPriceWithCommas(response.price)}`;
                     chrome.storage.local.set({ selectedPrice: formattedPrice });
                     priceDisplay.innerText = formattedPrice;
                 } 

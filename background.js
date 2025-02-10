@@ -1,3 +1,4 @@
+import { updateExtensionIcon, formatPriceForBadge, formatPriceWithCommas } from './utils.js';
 console.log("background.js loaded");
 
 const API_KEY = "XXX";
@@ -36,11 +37,10 @@ async function fetchTokenPrice(token, currency) {
         const price = data.data[token].quote[currency].price.toFixed(2);
         console.log(`Price of ${token} in ${currency}: ${currency === "USD" ? "$" : "£"}${price}`);
 
-        const formattedPrice = formatPriceForBadge(price);
-        chrome.action.setBadgeText({ text: formattedPrice });
+        chrome.action.setBadgeText({ text: formatPriceForBadge(price) });
         chrome.action.setBadgeBackgroundColor({ color: "#000" });
         
-        const formattedLastUpdatedPrice = `Last Updated Price: ${currency === "USD" ? "$" : "£"}${price}`;
+        const formattedLastUpdatedPrice = `Last Updated Price: ${currency === "USD" ? "$" : "£"}${formatPriceWithCommas(price)}`;
         chrome.storage.local.set({ selectedPrice: formattedLastUpdatedPrice });
 
         // update logo code:
@@ -84,36 +84,7 @@ async function fetchTokenLogo(token) {
     }
 }
 
-function updateExtensionIcon(logoUrl) {
-    console.log("Updating extension icon:", logoUrl);
 
-    fetch(logoUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64Image = reader.result;
-                chrome.action.setIcon({ path: base64Image });
-            };
-            reader.readAsDataURL(blob);
-        })
-        .catch(error => console.error("Error updating icon:", error));
-}
-
-function formatPriceForBadge(price) {
-    price = parseFloat(price);
-
-    if (price < 0.01) return price.toExponential(0);
-    else if (price < 10) return price.toString();
-    else if (price < 100) return price.toFixed(2);
-    else if (price < 1000) return price.toFixed(1);
-    else if (price < 10000) return (price / 1000).toFixed(2) + "K";
-    else if (price < 100000) return (price / 1000).toFixed(1) + "K";
-    else if (price < 1000000) return (price / 1000).toFixed(0) + "K";
-    else if (price >= 1000000) return (price / 1000000).toFixed(2) + "M";
-    
-    return price.toString();
-}
 
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
