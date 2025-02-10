@@ -1,7 +1,9 @@
 import { updateExtensionIcon, formatPriceForBadge, formatPriceWithCommas } from './utils.js';
+import { KEY } from './secrets.js';
+
 console.log("background.js loaded");
 
-const API_KEY = "XXX";
+const API_KEY = KEY;
 let lastTrackedToken = null;
 let lastTrackedCurrency = "USD";
 
