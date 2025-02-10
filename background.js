@@ -36,7 +36,8 @@ async function fetchTokenPrice(token, currency) {
         const price = data.data[token].quote[currency].price.toFixed(2);
         console.log(`Price of ${token} in ${currency}: ${currency === "USD" ? "$" : "£"}${price}`);
 
-        chrome.action.setBadgeText({ text: `${currency === "USD" ? "$" : "£"}${Math.round(price)}` });
+        const formattedPrice = formatPriceForBadge(price);
+        chrome.action.setBadgeText({ text: formattedPrice });
         chrome.action.setBadgeBackgroundColor({ color: "#000" });
         
         const formattedLastUpdatedPrice = `Last Updated Price: ${currency === "USD" ? "$" : "£"}${price}`;
@@ -98,6 +99,22 @@ function updateExtensionIcon(logoUrl) {
         })
         .catch(error => console.error("Error updating icon:", error));
 }
+
+function formatPriceForBadge(price) {
+    price = parseFloat(price);
+
+    if (price < 0.01) return price.toExponential(0);
+    else if (price < 10) return price.toString();
+    else if (price < 100) return price.toFixed(2);
+    else if (price < 1000) return price.toFixed(1);
+    else if (price < 10000) return (price / 1000).toFixed(2) + "K";
+    else if (price < 100000) return (price / 1000).toFixed(1) + "K";
+    else if (price < 1000000) return (price / 1000).toFixed(0) + "K";
+    else if (price >= 1000000) return (price / 1000000).toFixed(2) + "M";
+    
+    return price.toString();
+}
+
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Received message in background:", message);
