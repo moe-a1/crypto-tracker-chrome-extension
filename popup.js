@@ -1,60 +1,83 @@
-import { formatPriceWithCommas } from './utils.js';
+import { Token, TokenManager } from "./token-classes.js";
+import { updateBadge } from "./utils.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-    const trackButton = document.getElementById("track");
+document.addEventListener("DOMContentLoaded", async () => {
+    const addButton = document.getElementById("addToken");
     const tokenInput = document.getElementById("token");
     const currencySelect = document.getElementById("currency");
-    const priceDisplay = document.getElementById("price");
+    const tokenList = document.getElementById("tokenList");
 
-    chrome.storage.local.get(["selectedToken", "selectedCurrency", "selectedPrice"], (data) => {
-        if (chrome.runtime.lastError) {
-            console.error("Error retrieving data from storage:", chrome.runtime.lastError);
-            return;
+    const tokenManager = await new TokenManager().load();
+    renderTokens();
+
+    addButton.addEventListener("click", async () => {
+        const symbol = tokenInput.value.trim().toUpperCase();
+        const currency = currencySelect.value;
+        
+        if (!symbol) return;
+
+        if (tokenManager.addToken(new Token(symbol, currency))) {
+            chrome.runtime.sendMessage({ action: "updateTokens", tokens: tokenManager.tokens });
+            renderTokens();
+
+            try {
+                const updatedToken = await chrome.runtime.sendMessage({ action: "fetchTokenData", token: new Token(symbol, currency) });                
+                Object.assign(tokenManager.tokens.find(t => t.matches(symbol, currency)), updatedToken);
+                tokenManager.save();
+                renderTokens();
+            } 
+            catch (error) {
+                tokenManager.tokens.find(t => t.matches(symbol, currency)).setError(error.message || 'Failed to fetch data');
+                tokenManager.save();
+                renderTokens();
+            }
         }
-
-        if (data.selectedToken) tokenInput.value = data.selectedToken;
-        if (data.selectedCurrency) currencySelect.value = data.selectedCurrency;
-        if (data.selectedPrice) priceDisplay.innerText = data.selectedPrice;
+        tokenInput.value = "";
     });
 
-    function fetchPrice() {
-        const currentToken = tokenInput.value.trim().toUpperCase();
-        const currentCurrency = currencySelect.value;
+    function renderTokens() {
+        tokenList.innerHTML = "";
+        tokenManager.tokens.forEach((token, index) => {
+            const tokenCard = document.createElement("div");
+            tokenCard.className = "token-card";
 
-        if (!currentToken) {
-            priceDisplay.innerText = "Please enter a valid token symbol.";
-            return;
-        }
+            tokenCard.innerHTML = `
+                <img src="${token.logo || 'icons/loading.svg'}" class="token-logo">
+                <div class="token-info">
+                    <span class="token-symbol">${token.symbol}</span>
+                    <span class="token-currency">${token.currency}</span>
+                    <span class="token-price">${token.formattedPrice()}</span>
+                </div>
+                <button class="btn-icon set-active" data-index="${index}">
+                    <img src="${token.getStarIcon()}" class="${token.isActive ? 'active-star' : ''}">
+                </button>
+                <button class="btn-icon delete-token" data-index="${index}">
+                    <img src="icons/trash.svg">
+                </button>
+            `;
 
-        chrome.storage.local.set({ selectedToken: currentToken, selectedCurrency: currentCurrency });
+            tokenList.appendChild(tokenCard);
+        });
 
-        chrome.runtime.sendMessage(
-            { action: "fetchPrice", token: currentToken, currency: currentCurrency }, 
-            (response) => {
-                if (chrome.runtime.lastError) {
-                    console.error("Error sending message:", chrome.runtime.lastError);
-                    return;
-                }
+        document.querySelectorAll('.set-active').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('button').dataset.index);
+                tokenManager.setActiveForThisTokenOnly(tokenManager.tokens[index]);
+                updateBadge(tokenManager.tokens[index]);
+                renderTokens();
+            });
+        });
 
-                if (response && response.price) {
-                    console.log("Updated price:", response.price);
-
-                    const formattedPrice = `Price: ${currentCurrency === "USD" ? "$" : "£"}${formatPriceWithCommas(response.price)}`;
-                    chrome.storage.local.set({ selectedPrice: formattedPrice });
-                    priceDisplay.innerText = formattedPrice;
-                } 
-                else {
-                    console.warn("No valid response received");
-                }
-            }
-        );
+        document.querySelectorAll('.delete-token').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('button').dataset.index);
+                tokenManager.deleteToken(tokenManager.tokens[index]);
+                renderTokens();
+            });
+        });
     }
 
-    trackButton.addEventListener("click", fetchPrice);
-
     chrome.storage.onChanged.addListener((changes) => {
-        if (changes.selectedPrice) {
-            priceDisplay.innerText = changes.selectedPrice.newValue;
-        }
+        if (changes.tokens) tokenManager.load().then(renderTokens);
     });
 });
