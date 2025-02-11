@@ -1,19 +1,4 @@
-export function updateExtensionIcon(logoUrl) {
-    console.log("Updating extension icon:", logoUrl);
-
-    fetch(logoUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64Image = reader.result;
-                chrome.action.setIcon({ path: base64Image });
-            };
-            reader.readAsDataURL(blob);
-        })
-        .catch(error => console.error("Error updating icon:", error));
-}
-
+// format price functions
 export function formatPriceForBadge(price) {
     price = parseFloat(price);
 
@@ -33,3 +18,35 @@ export function formatPriceWithCommas(price) {
     return parseFloat(price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// extension badge function
+export function updateBadge(token) {
+    if (token?.price) {
+        const badgeText = formatPriceForBadge(token.price);
+        console.log("Updating badge text:", badgeText);
+        chrome.action.setBadgeText({ text: badgeText });
+
+        if (token.logo) 
+            updateBadgeIcon(token.logo);
+    }
+}
+
+export function updateBadgeIcon(logoUrl) {
+    console.log("Updating extension icon:", logoUrl);
+
+    fetch(logoUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64Image = reader.result;
+                chrome.action.setIcon({ path: base64Image });
+            };
+            reader.readAsDataURL(blob);
+        })
+        .catch(error => console.error("Error updating icon:", error));
+}
+
+// alarm function
+export function startAlarmTracking() {
+    chrome.alarms.create("refreshPrices", { periodInMinutes: 1 });
+}
