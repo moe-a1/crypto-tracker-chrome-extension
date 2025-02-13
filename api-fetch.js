@@ -20,7 +20,7 @@ export async function fetchTokenPrice(symbol, currency) {
         return price;
     } 
     catch (error) {
-        console.error("Invalid token requested", error);
+        console.warn("Invalid token requested", error);
         return null;
     }
 }
@@ -42,7 +42,7 @@ export async function fetchTokenLogo(symbol) {
         return data.data[symbol]?.logo || null;
     } 
     catch (error) {
-        console.error("Invalid token requested", error);
+        console.warn("Invalid token requested", error);
         return null;
     }
 }
