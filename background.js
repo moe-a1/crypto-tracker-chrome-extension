@@ -24,10 +24,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             deleteToken(message.index);
             sendResponse(tokens);
             return true;
-
-        case "getTokens":
-            sendResponse(tokens);
-            return true;
     }
 });
 
@@ -42,12 +38,11 @@ async function addToken(symbol, currency) {
     try {
         const updatedToken = await fetchTokenData(newToken);
         Object.assign(tokens.find(t => t.symbol === symbol && t.currency === currency), updatedToken);
-        saveTokens();
     } catch (error) {
         newToken.error = error.message || "Failed to fetch data";
-        saveTokens();
     }
-
+    
+    saveTokens();
     return tokens;
 }
 
@@ -59,7 +54,7 @@ async function fetchTokenData(token) {
         ]);
         return { ...token, price, logo, error: null };
     } catch (error) {
-        return { ...token, pirce: null, error: error.message };
+        return { ...token, price: null, error: error.message };
     }
 }
 

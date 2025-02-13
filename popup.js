@@ -6,8 +6,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currencySelect = document.getElementById("currency");
     const tokenList = document.getElementById("tokenList");
 
-    let tokens = await getTokens();
-    renderTokens();
+    let tokens = [];
+    
+    chrome.storage.local.get(["tokens"], (data) => {
+        tokens = data.tokens || [];
+        renderTokens();
+    });
 
     addButton.addEventListener("click", async () => {
         const symbol = tokenInput.value.trim().toUpperCase();
@@ -63,10 +67,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 renderTokens();
             });
         });
-    }
-
-    async function getTokens() {
-        return sendMessage({ action: "getTokens" });
     }
 
     function sendMessage(message) {
