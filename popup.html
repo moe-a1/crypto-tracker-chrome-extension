@@ -9,19 +9,19 @@
 <body>
     <div class="popup-container">
         <h2 class="popup-title">Crypto Price Tracker</h2>
-        <div class="input-group">
-            <label for="token">Token Symbol</label>
-            <input type="text" id="token" placeholder="Enter Token Symbol (e.g., BTC)" />
+        <div class="input-row">
+            <div class="input-group">
+                <input type="text" id="token" placeholder="Token (e.g., BTC)">
+            </div>
+            <div class="input-group">
+                <select id="currency">
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                </select>
+            </div>
         </div>
-        <div class="input-group">
-            <label for="currency">Select Currency</label>
-            <select id="currency">
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
-            </select>
-        </div>
-        <button id="track" class="track-btn">Track Price</button>
-        <p id="price" class="price-text">Price: --</p>
+        <button id="addToken" class="add-btn">Add Token</button>
+        <div id="tokenList" class="token-list"></div>
     </div>
     <script type="module" src="popup.js"></script>
 </body>

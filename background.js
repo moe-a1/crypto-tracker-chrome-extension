@@ -1,116 +1,109 @@
-import { updateExtensionIcon, formatPriceForBadge, formatPriceWithCommas } from './utils.js';
-import { KEY } from './secrets.js';
+import { updateBadge, startAlarmTracking } from './utils.js';
+import { fetchTokenPrice, fetchTokenLogo } from './api-fetch.js';
 
-console.log("background.js loaded");
+let tokens = [];
 
-const API_KEY = KEY;
-let lastTrackedToken = null;
-let lastTrackedCurrency = "USD";
-
-chrome.storage.local.get(["selectedToken", "selectedCurrency"], (data) => {
-    if (data.selectedToken) lastTrackedToken = data.selectedToken;
-    if (data.selectedCurrency) lastTrackedCurrency = data.selectedCurrency;
+chrome.storage.local.get(["tokens"], (data) => {
+    tokens = data.tokens || [];
+    startAlarmTracking();
+    updateAllPricesAndBadge();
 });
-
-async function fetchTokenPrice(token, currency) {
-    console.log(`Fetching ${currency} price for token: ${token}`);
-
-    try {
-        const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${token}&convert=${currency}`;
-        console.log("GET URL:", url);
-
-        const response = await fetch(url, {
-            headers: { "X-CMC_PRO_API_KEY": API_KEY }
-        });
-
-        if (!response.ok) {
-            console.error(`API request failed: ${response.status} - ${response.statusText}`);
-            return null;
-        }
-
-        const data = await response.json();
-        console.log("Parsed API response:", data);
-
-        if (!data.data || !data.data[token] || !data.data[token].quote || !data.data[token].quote[currency]) {
-            console.error("Invalid API response format:", data);
-            return null;
-        }
-
-        const price = data.data[token].quote[currency].price.toFixed(2);
-        console.log(`Price of ${token} in ${currency}: ${currency === "USD" ? "$" : "£"}${price}`);
-
-        chrome.action.setBadgeText({ text: formatPriceForBadge(price) });
-        chrome.action.setBadgeBackgroundColor({ color: "#000" });
-        
-        const formattedLastUpdatedPrice = `Last Updated Price: ${currency === "USD" ? "$" : "£"}${formatPriceWithCommas(price)}`;
-        chrome.storage.local.set({ selectedPrice: formattedLastUpdatedPrice });
-
-        // update logo code:
-        const logoUrl = await fetchTokenLogo(token);
-        if (logoUrl) updateExtensionIcon(logoUrl);
-        
-        return price;
-    } 
-    catch (error) {
-        console.error("Error fetching token price:", error);
-        return null;
-    }
-}
-
-async function fetchTokenLogo(token) {
-    console.log(`Fetching logo for token: ${token}`);
-
-    try {
-        const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/info?symbol=${token}`;
-        const response = await fetch(url, {
-            headers: { "X-CMC_PRO_API_KEY": API_KEY }
-        });
-
-        if (!response.ok) {
-            console.error(`Logo API request failed: ${response.status} - ${response.statusText}`);
-            return null;
-        }
-
-        const data = await response.json();
-        
-        if (!data.data || !data.data[token] || !data.data[token].logo) {
-            console.error("Invalid logo response format:", data);
-            return null;
-        }
-
-        return data.data[token].logo;
-    } 
-    catch (error) {
-        console.error("Error fetching token logo:", error);
-        return null;
-    }
-}
-
-
-
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Received message in background:", message);
+    switch (message.action) {
+        case "addToken":
+            addToken(message.symbol, message.currency).then(sendResponse);
+            return true;
 
-    if (message.action === "fetchPrice") {
-        lastTrackedToken = message.token;
-        lastTrackedCurrency = message.currency;
-        
-        fetchTokenPrice(message.token, message.currency)
-        .then(price => { sendResponse({ price }); })
-        .catch(err => {
-            console.error("Error in fetchTokenPrice:", err);
-            sendResponse(null);
-        });
+        case "setActive":
+            setActiveToken(message.index);
+            sendResponse(tokens);
+            return true;
 
-        return true;
+        case "deleteToken":
+            deleteToken(message.index);
+            sendResponse(tokens);
+            return true;
     }
 });
 
-chrome.alarms.create("refreshPrice", { periodInMinutes: 1 });
-chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "refreshPrice" && lastTrackedToken) {
-        console.log("Refreshing price via alarms...");
-        fetchTokenPrice(lastTrackedToken, lastTrackedCurrency);
+async function addToken(symbol, currency) {
+    if (tokens.some(t => t.symbol === symbol && t.currency === currency)) 
+        return tokens;
+
+    const newToken = { symbol, currency, price: null, logo: null, isActive: false, error: null };
+    tokens.push(newToken);
+    saveTokens();
+
+    try {
+        const updatedToken = await fetchTokenData(newToken);
+        Object.assign(tokens.find(t => t.symbol === symbol && t.currency === currency), updatedToken);
+    } catch (error) {
+        newToken.error = error.message || "Failed to fetch data";
     }
+    
+    saveTokens();
+    return tokens;
+}
+
+async function fetchTokenData(token) {
+    try {
+        const [price, logo] = await Promise.all([
+            fetchTokenPrice(token.symbol, token.currency),
+            fetchTokenLogo(token.symbol)
+        ]);
+        return { ...token, price, logo, error: null };
+    } catch (error) {
+        return { ...token, price: null, error: error.message };
+    }
+}
+
+async function updateAllPricesAndBadge() {
+    tokens = await Promise.all(tokens.map(async token => {
+        try {
+            const [price, logo] = await Promise.all([
+                fetchTokenPrice(token.symbol, token.currency),
+                token.logo || fetchTokenLogo(token.symbol)
+            ]);
+            return { ...token, price, logo, error: null };
+        } catch (error) {
+            return { ...token, price: null, error: error.message };
+        }
+    }));
+
+    saveTokens();
+
+    const activeToken = tokens.find(t => t.isActive);
+    if (activeToken) updateBadge(activeToken);
+}
+
+function setActiveToken(index) {
+    if (!tokens[index].price) return;
+    
+    tokens.forEach(t => t.isActive = false);
+    tokens[index].isActive = true;
+    updateBadge(tokens[index]);
+    saveTokens();
+}
+
+function deleteToken(index) {
+    if (tokens[index].isActive) {
+        const nextActiveToken = tokens.find(t => t !== tokens[index]);
+        if (nextActiveToken) setActiveToken(tokens.indexOf(nextActiveToken));
+        else{
+            chrome.action.setIcon({ path: "icons/default-38.png" });
+            chrome.action.setBadgeText({ text: '' });
+        }
+    }
+
+    tokens.splice(index, 1);
+    saveTokens();
+}
+
+function saveTokens() {
+    chrome.storage.local.set({ tokens });
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "refreshPrices") updateAllPricesAndBadge();
 });

@@ -3,22 +3,18 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
+    padding: 10px;
     background-color: #1e1e1e;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    min-width: 350px;
     color: #ddd;
 }
 
 .popup-container {
     background-color: #2a2a2a;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    width: 280px;
-    text-align: center;
+    width: 350px;
 }
 
 .popup-title {
@@ -26,59 +22,107 @@ body {
     font-size: 20px;
     margin-bottom: 15px;
     color: #fff;
+    text-align: center;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 .input-group {
-    margin-bottom: 12px;
-    text-align: left;
-}
-
-.input-group label {
-    font-size: 13px;
-    color: #bbb;
+    flex: 1;
 }
 
 .input-group input,
 .input-group select {
-    width: calc(100% - 2px);
+    width: 100%;
     padding: 8px;
     border: 1px solid #444;
     border-radius: 5px;
     font-size: 14px;
     background-color: #333;
     color: #ddd;
-    box-sizing: border-box;
 }
 
-.track-btn {
-    background-color: #007bff;
+.add-btn {
+    background-color: #28a745;
     color: white;
-    font-size: 15px;
     padding: 10px;
     border: none;
     border-radius: 5px;
     width: 100%;
     cursor: pointer;
-    margin-top: 12px;
-    font-weight: 600;
+    margin-bottom: 15px;
 }
 
-.track-btn:hover {
-    background-color: #0056b3;
+.add-btn:hover {
+    background-color: #218838;
 }
 
-.price-text {
-    font-size: 15px;
+.token-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.token-card {
+    background-color: #333;
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.token-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.token-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.token-symbol {
     font-weight: bold;
-    color: #fff;
-    margin-top: 15px;
+    min-width: 50px;
 }
 
-select {
+.token-price {
+    flex: 1;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.token-error {
+    color: #dc3545;
+    font-size: 0.8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
     cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
 }
 
-button:disabled {
-    background-color: #555;
-    cursor: not-allowed;
+.btn-icon img {
+    width: 16px;
+    height: 16px;
+}
+
+.active-star {
+    filter: invert(75%) sepia(61%) saturate(671%) hue-rotate(358deg) brightness(103%) contrast(105%);
 }
