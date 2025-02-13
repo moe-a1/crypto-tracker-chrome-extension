@@ -1,5 +1,5 @@
-import { updateBadge, startAlarmTracking } from "./utils.js";
-import { fetchTokenPrice, fetchTokenLogo } from "./api-fetch.js";
+import { updateBadge, startAlarmTracking } from './utils.js';
+import { fetchTokenPrice, fetchTokenLogo } from './api-fetch.js';
 
 let tokens = [];
 

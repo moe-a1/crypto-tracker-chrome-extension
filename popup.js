@@ -1,4 +1,4 @@
-import { formatPriceWithCommas } from "./utils.js";
+import { formatPriceWithCommas } from './utils.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
     const addButton = document.getElementById("addToken");
