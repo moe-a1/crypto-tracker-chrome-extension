@@ -46,6 +46,11 @@ export function updateBadgeIcon(logoUrl) {
         .catch(error => console.error("Error updating icon:", error));
 }
 
+export function resetBadge() {
+    chrome.action.setIcon({ path: "icons/default-38.png" });
+    chrome.action.setBadgeText({ text: '' });
+}
+
 // alarm function
 export function startAlarmTracking() {
     chrome.alarms.create("refreshPrices", { periodInMinutes: 1 });

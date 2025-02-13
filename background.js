@@ -1,4 +1,4 @@
-import { updateBadge, startAlarmTracking } from './utils.js';
+import { updateBadge, resetBadge, startAlarmTracking } from './utils.js';
 import { fetchTokenPrice, fetchTokenLogo } from './api-fetch.js';
 
 let tokens = [];
@@ -78,22 +78,27 @@ async function updateAllPricesAndBadge() {
 }
 
 function setActiveToken(index) {
-    if (!tokens[index].price) return;
+    const token = tokens[index];
+    if (!token.price) return;
     
-    tokens.forEach(t => t.isActive = false);
-    tokens[index].isActive = true;
-    updateBadge(tokens[index]);
+    if (token.isActive) {
+        token.isActive = false;
+        resetBadge();
+    }
+    else {
+        tokens.forEach(t => t.isActive = false);
+        token.isActive = true;
+        updateBadge(token);
+    }
+    
     saveTokens();
 }
 
 function deleteToken(index) {
     if (tokens[index].isActive) {
-        const nextActiveToken = tokens.find(t => t !== tokens[index]);
+        const nextActiveToken = tokens.find(t => t !== tokens[index] && t.price);
         if (nextActiveToken) setActiveToken(tokens.indexOf(nextActiveToken));
-        else{
-            chrome.action.setIcon({ path: "icons/default-38.png" });
-            chrome.action.setBadgeText({ text: '' });
-        }
+        else resetBadge();
     }
 
     tokens.splice(index, 1);
