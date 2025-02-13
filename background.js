@@ -1,65 +1,101 @@
-import { Token, TokenManager } from "./token-classes.js";
 import { updateBadge, startAlarmTracking } from "./utils.js";
 import { fetchTokenPrice, fetchTokenLogo } from "./api-fetch.js";
 
-const tokenManager = new TokenManager();
+let tokens = [];
 
-tokenManager.load().then(() => {
+chrome.storage.local.get(["tokens"], (data) => {
+    tokens = data.tokens || [];
     startAlarmTracking();
     fetchAllPrices();
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Received message:", message);
     switch (message.action) {
-        case "fetchTokenData":
-            handleFetchTokenData(new Token(message.token.symbol, message.token.currency))
-                .then(updatedToken => sendResponse(updatedToken))
-                .catch(error => sendResponse({ ...message.token, error: error.message }));
+        case "addToken":
+            addToken(message.symbol, message.currency).then(sendResponse);
             return true;
 
-        case "updateTokens":
-            tokenManager.tokens = message.tokens.map(t => new Token(t.symbol, t.currency, t.price, t.logo, t.isActive, t.error));
-            tokenManager.save();
-            startAlarmTracking();
-            break;
+        case "setActive":
+            setActiveToken(message.index);
+            sendResponse(tokens);
+            return true;
+
+        case "deleteToken":
+            deleteToken(message.index);
+            sendResponse(tokens);
+            return true;
+
+        case "getTokens":
+            sendResponse(tokens);
+            return true;
     }
 });
 
-async function handleFetchTokenData(token) {
+async function addToken(symbol, currency) {
+    if (tokens.some(t => t.symbol === symbol && t.currency === currency)) 
+        return tokens;
+
+    const newToken = { symbol, currency, price: null, logo: null, isActive: false, error: null };
+    tokens.push(newToken);
+    saveTokens();
+
+    try {
+        const updatedToken = await fetchTokenData(newToken);
+        Object.assign(tokens.find(t => t.symbol === symbol && t.currency === currency), updatedToken);
+        saveTokens();
+    } catch (error) {
+        newToken.error = error.message || "Failed to fetch data";
+        saveTokens();
+    }
+
+    return tokens;
+}
+
+async function fetchTokenData(token) {
     try {
         const [price, logo] = await Promise.all([
             fetchTokenPrice(token.symbol, token.currency),
             fetchTokenLogo(token.symbol)
         ]);
-        
-        token.update(price, logo);
-
-        return token;
-    } 
-    catch (error) {
-        token.setError(error.message);
-        return token;
+        return { ...token, price, logo };
+    } catch (error) {
+        return { ...token, error: error.message };
     }
 }
 
 async function fetchAllPrices() {
-    await Promise.all(tokenManager.tokens.map(async token => {
+    tokens = await Promise.all(tokens.map(async token => {
         try {
             const [price, logo] = await Promise.all([
                 fetchTokenPrice(token.symbol, token.currency),
-                token.logo ? Promise.resolve(token.logo) : fetchTokenLogo(token.symbol)
+                token.logo || fetchTokenLogo(token.symbol)
             ]);
-            token.update(price, logo);
+            return { ...token, price, logo };
         } catch (error) {
-            token.setError(error.message);
+            return { ...token, error: error.message };
         }
     }));
-    
-    tokenManager.save();
-    
-    const activeToken = tokenManager.getActive();
+
+    saveTokens();
+
+    const activeToken = tokens.find(t => t.isActive);
     if (activeToken) updateBadge(activeToken);
+}
+
+function setActiveToken(index) {
+    tokens.forEach(t => t.isActive = false);
+    tokens[index].isActive = true;
+    updateBadge(tokens[index]);
+    saveTokens();
+}
+
+function deleteToken(index) {
+    tokens.splice(index, 1);
+    saveTokens();
+}
+
+function saveTokens() {
+    chrome.storage.local.set({ tokens });
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {

@@ -1,5 +1,4 @@
-import { Token, TokenManager } from "./token-classes.js";
-import { updateBadge } from "./utils.js";
+import { formatPriceWithCommas } from "./utils.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     const addButton = document.getElementById("addToken");
@@ -7,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currencySelect = document.getElementById("currency");
     const tokenList = document.getElementById("tokenList");
 
-    const tokenManager = await new TokenManager().load();
+    let tokens = await getTokens();
     renderTokens();
 
     addButton.addEventListener("click", async () => {
@@ -16,28 +15,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         if (!symbol) return;
 
-        if (tokenManager.addToken(new Token(symbol, currency))) {
-            chrome.runtime.sendMessage({ action: "updateTokens", tokens: tokenManager.tokens });
-            renderTokens();
-
-            try {
-                const updatedToken = await chrome.runtime.sendMessage({ action: "fetchTokenData", token: new Token(symbol, currency) });                
-                Object.assign(tokenManager.tokens.find(t => t.matches(symbol, currency)), updatedToken);
-                tokenManager.save();
-                renderTokens();
-            } 
-            catch (error) {
-                tokenManager.tokens.find(t => t.matches(symbol, currency)).setError(error.message || 'Failed to fetch data');
-                tokenManager.save();
-                renderTokens();
-            }
-        }
+        tokens = await sendMessage({ action: "addToken", symbol, currency });
+        renderTokens();
         tokenInput.value = "";
     });
 
     function renderTokens() {
         tokenList.innerHTML = "";
-        tokenManager.tokens.forEach((token, index) => {
+        tokens.forEach((token, index) => {
             const tokenCard = document.createElement("div");
             tokenCard.className = "token-card";
 
@@ -46,10 +31,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div class="token-info">
                     <span class="token-symbol">${token.symbol}</span>
                     <span class="token-currency">${token.currency}</span>
-                    <span class="token-price">${token.formattedPrice()}</span>
+                    <span class="token-price">${token.currency === "USD" ? "$" : "£"}${formatPriceWithCommas(token.price)}</span>
                 </div>
                 <button class="btn-icon set-active" data-index="${index}">
-                    <img src="${token.getStarIcon()}" class="${token.isActive ? 'active-star' : ''}">
+                    <img src="${token.isActive ? 'icons/star-filled.svg' : 'icons/star-empty.svg'}">
                 </button>
                 <button class="btn-icon delete-token" data-index="${index}">
                     <img src="icons/trash.svg">
@@ -60,24 +45,36 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         document.querySelectorAll('.set-active').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const index = parseInt(e.target.closest('button').dataset.index);
-                tokenManager.setActiveForThisTokenOnly(tokenManager.tokens[index]);
-                updateBadge(tokenManager.tokens[index]);
+                tokens = await sendMessage({ action: "setActive", index });
                 renderTokens();
             });
         });
 
         document.querySelectorAll('.delete-token').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const index = parseInt(e.target.closest('button').dataset.index);
-                tokenManager.deleteToken(tokenManager.tokens[index]);
+                tokens = await sendMessage({ action: "deleteToken", index });
                 renderTokens();
             });
         });
     }
 
-    chrome.storage.onChanged.addListener((changes) => {
-        if (changes.tokens) tokenManager.load().then(renderTokens);
+    async function getTokens() {
+        return sendMessage({ action: "getTokens" });
+    }
+
+    function sendMessage(message) {
+        return new Promise(resolve => {
+            chrome.runtime.sendMessage(message, resolve);
+        });
+    }
+
+    chrome.storage.onChanged.addListener(() => {
+        getTokens().then(updatedTokens => {
+            tokens = updatedTokens;
+            renderTokens();
+        });
     });
 });
