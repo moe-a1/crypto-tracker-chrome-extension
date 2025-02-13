@@ -75,10 +75,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    chrome.storage.onChanged.addListener(() => {
-        getTokens().then(updatedTokens => {
-            tokens = updatedTokens;
+    chrome.storage.onChanged.addListener((changes) => {
+        if (changes.tokens) {
+            tokens = changes.tokens.newValue;
             renderTokens();
-        });
+        }
     });
 });
