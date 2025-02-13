@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tokenInput = document.getElementById("token");
     const currencySelect = document.getElementById("currency");
     const tokenList = document.getElementById("tokenList");
+    const errorElement = document.getElementById("errorMessage");
 
     let tokens = [];
     
@@ -17,11 +18,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         const symbol = tokenInput.value.trim().toUpperCase();
         const currency = currencySelect.value;
         
-        if (!symbol) return;
+        if (!symbol){
+            showError("Please enter a token symbol.");
+            return;
+        }
 
-        tokens = await sendMessage({ action: "addToken", symbol, currency });
-        renderTokens();
-        tokenInput.value = "";
+        const result = await sendMessage({ action: "addToken", symbol, currency });
+        if (result.isDuplicate) {
+            showError(`${symbol} in ${currency} already exists.`);
+        } else {
+            errorElement.style.display = "none";
+            tokens = result.tokens;
+            renderTokens();
+            tokenInput.value = "";
+        }
     });
 
     function renderTokens() {
@@ -73,6 +83,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         return new Promise(resolve => {
             chrome.runtime.sendMessage(message, resolve);
         });
+    }
+
+    function showError(message) {
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
     }
 
     chrome.storage.onChanged.addListener((changes) => {

@@ -12,7 +12,7 @@ chrome.storage.local.get(["tokens"], (data) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.action) {
         case "addToken":
-            addToken(message.symbol, message.currency).then(sendResponse);
+            addToken(message.symbol, message.currency).then(result => sendResponse(result));
             return true;
 
         case "setActive":
@@ -29,7 +29,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function addToken(symbol, currency) {
     if (tokens.some(t => t.symbol === symbol && t.currency === currency)) 
-        return tokens;
+        return { tokens, isDuplicate: true };
 
     const newToken = { symbol, currency, price: null, logo: null, isActive: false, error: null };
     tokens.push(newToken);
@@ -43,7 +43,7 @@ async function addToken(symbol, currency) {
     }
     
     saveTokens();
-    return tokens;
+    return { tokens, isDuplicate: false };
 }
 
 async function fetchTokenData(token) {

@@ -123,6 +123,14 @@ body {
     height: 16px;
 }
 
+.error-message {
+    color: #dc3545;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    display: none;
+    text-align: center;
+}
+
 .active-star {
     filter: invert(75%) sepia(61%) saturate(671%) hue-rotate(358deg) brightness(103%) contrast(105%);
 }
