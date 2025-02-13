@@ -87,6 +87,15 @@ function setActiveToken(index) {
 }
 
 function deleteToken(index) {
+    if (tokens[index].isActive) {
+        const nextActiveToken = tokens.find(t => t !== tokens[index]);
+        if (nextActiveToken) setActiveToken(tokens.indexOf(nextActiveToken));
+        else{
+            chrome.action.setIcon({ path: "icons/default-38.png" });
+            chrome.action.setBadgeText({ text: '' });
+        }
+    }
+
     tokens.splice(index, 1);
     saveTokens();
 }
