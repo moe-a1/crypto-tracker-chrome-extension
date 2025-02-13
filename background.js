@@ -57,9 +57,9 @@ async function fetchTokenData(token) {
             fetchTokenPrice(token.symbol, token.currency),
             fetchTokenLogo(token.symbol)
         ]);
-        return { ...token, price, logo };
+        return { ...token, price, logo, error: null };
     } catch (error) {
-        return { ...token, error: error.message };
+        return { ...token, pirce: null, error: error.message };
     }
 }
 
@@ -70,9 +70,9 @@ async function updateAllPricesAndBadge() {
                 fetchTokenPrice(token.symbol, token.currency),
                 token.logo || fetchTokenLogo(token.symbol)
             ]);
-            return { ...token, price, logo };
+            return { ...token, price, logo, error: null };
         } catch (error) {
-            return { ...token, error: error.message };
+            return { ...token, price: null, error: error.message };
         }
     }));
 
@@ -83,6 +83,8 @@ async function updateAllPricesAndBadge() {
 }
 
 function setActiveToken(index) {
+    if (!tokens[index].price) return;
+    
     tokens.forEach(t => t.isActive = false);
     tokens[index].isActive = true;
     updateBadge(tokens[index]);

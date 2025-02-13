@@ -5,7 +5,7 @@ export async function fetchTokenPrice(symbol, currency) {
     try {
         const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}&convert=${currency}`;
         const response = await fetch(url, { headers: { "X-CMC_PRO_API_KEY": API_KEY } });
-        console.log(`API call made for ${symbol} in ${currency}`);
+        console.log(`API call made for price of ${symbol} in ${currency}`);
 
         if (!response.ok){
             console.log("Parsed API response:", data);

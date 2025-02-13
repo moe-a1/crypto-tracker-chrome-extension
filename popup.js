@@ -25,13 +25,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         tokens.forEach((token, index) => {
             const tokenCard = document.createElement("div");
             tokenCard.className = "token-card";
-
+    
+            const priceDisplay = token.price 
+                ? `<span class="token-price">${token.currency === "USD" ? "$" : "£"}${formatPriceWithCommas(token.price)}</span>`
+                : `<span class="token-price" style="color:red">Invalid token</span>`;
+    
             tokenCard.innerHTML = `
                 <img src="${token.logo || 'icons/loading.svg'}" class="token-logo">
                 <div class="token-info">
                     <span class="token-symbol">${token.symbol}</span>
                     <span class="token-currency">${token.currency}</span>
-                    <span class="token-price">${token.currency === "USD" ? "$" : "£"}${formatPriceWithCommas(token.price)}</span>
+                    ${priceDisplay}
                 </div>
                 <button class="btn-icon set-active" data-index="${index}">
                     <img src="${token.isActive ? 'icons/star-filled.svg' : 'icons/star-empty.svg'}">
