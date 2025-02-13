@@ -31,7 +31,7 @@ export function updateBadge(token) {
 }
 
 export function updateBadgeIcon(logoUrl) {
-    console.log("Updating extension icon:", logoUrl);
+    console.log("Updating badge icon:", logoUrl);
 
     fetch(logoUrl)
         .then(response => response.blob())

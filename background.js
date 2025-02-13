@@ -6,7 +6,7 @@ let tokens = [];
 chrome.storage.local.get(["tokens"], (data) => {
     tokens = data.tokens || [];
     startAlarmTracking();
-    fetchAllPrices();
+    updateAllPricesAndBadge();
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -63,7 +63,7 @@ async function fetchTokenData(token) {
     }
 }
 
-async function fetchAllPrices() {
+async function updateAllPricesAndBadge() {
     tokens = await Promise.all(tokens.map(async token => {
         try {
             const [price, logo] = await Promise.all([
@@ -99,5 +99,5 @@ function saveTokens() {
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "refreshPrices") fetchAllPrices();
+    if (alarm.name === "refreshPrices") updateAllPricesAndBadge();
 });
