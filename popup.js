@@ -14,6 +14,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderTokens();
     });
 
+    chrome.storage.local.get(["selectedCurrency"], (data) => {
+        if (data.selectedCurrency) 
+            currencySelect.value = data.selectedCurrency;
+    });
+
+    currencySelect.addEventListener("change", () => {
+        chrome.storage.local.set({ selectedCurrency: currencySelect.value });
+    });
+
     addButton.addEventListener("click", async () => {
         const symbol = tokenInput.value.trim().toUpperCase();
         const currency = currencySelect.value;
