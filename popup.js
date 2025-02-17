@@ -1,11 +1,13 @@
-import { formatPriceWithCommas } from './utils.js';
+import { formatPriceWithCommas, startAlarmTracking } from './utils.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const addButton = document.getElementById("addToken");
     const tokenInput = document.getElementById("token");
     const currencySelect = document.getElementById("currency");
-    const tokenList = document.getElementById("tokenList");
+    const addButton = document.getElementById("addToken");
     const errorElement = document.getElementById("errorMessage");
+    const tokenList = document.getElementById("tokenList");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const mainPage = document.getElementById("mainPage");
 
     let tokens = [];
     
@@ -14,13 +16,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderTokens();
     });
 
+    const backBtn = document.getElementById("backBtn");
+    const settingsPage = document.getElementById("settingsPage");
+    const priceRefreshTimeInput = document.getElementById("priceRefreshTime");
+    const timeUnitSelect = document.getElementById("timeUnit");
+
+    let priceRefreshTime = 1;
+    let timeUnit = "minutes";
+
+    chrome.storage.local.get(["priceRefreshTime", "timeUnit"], (data) => {
+        priceRefreshTime = data.priceRefreshTime || 1;
+        timeUnit = data.timeUnit || "minutes";
+        priceRefreshTimeInput.value = priceRefreshTime;
+        timeUnitSelect.value = timeUnit;
+    });
+
     chrome.storage.local.get(["selectedCurrency"], (data) => {
         if (data.selectedCurrency) 
             currencySelect.value = data.selectedCurrency;
     });
-
     currencySelect.addEventListener("change", () => {
         chrome.storage.local.set({ selectedCurrency: currencySelect.value });
+    });
+
+    settingsBtn.addEventListener("click", () => {
+        mainPage.style.display = "none";
+        settingsPage.style.display = "block";
+    });
+
+    backBtn.addEventListener("click", () => {
+        settingsPage.style.display = "none";
+        mainPage.style.display = "block";
+
+        priceRefreshTime = parseInt(priceRefreshTimeInput.value);
+        timeUnit = timeUnitSelect.value;
+        chrome.storage.local.set({ priceRefreshTime, timeUnit });
+        startAlarmTracking();
     });
 
     addButton.addEventListener("click", async () => {

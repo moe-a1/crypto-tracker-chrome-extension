@@ -8,21 +8,54 @@
 </head>
 <body>
     <div class="popup-container">
-        <h2 class="popup-title">Crypto Price Tracker</h2>
-        <div class="input-row">
-            <div class="input-group">
-                <input type="text" id="token" placeholder="Token (e.g., BTC)">
+        
+        <div id="mainPage">
+            <div class="header">
+                <button id="settingsBtn" class="btn-icon settings-btn">
+                    <img src="icons/settings.svg" alt="Settings">
+                </button>
             </div>
-            <div class="input-group">
-                <select id="currency">
-                    <option value="USD">USD</option>
-                    <option value="GBP">GBP</option>
-                </select>
+            <h2 class="popup-title">Crypto Price Tracker</h2>
+            <div class="input-row">
+                <div class="input-group">
+                    <input type="text" id="token" placeholder="Token (e.g., BTC)">
+                </div>
+                <div class="input-group">
+                    <select id="currency">
+                        <option value="USD">USD</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
             </div>
+            <button id="addToken" class="add-btn">Add Token</button>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="tokenList" class="token-list"></div>
         </div>
-        <button id="addToken" class="add-btn">Add Token</button>
-        <div id="errorMessage" class="error-message"></div>
-        <div id="tokenList" class="token-list"></div>
+
+        <div id="settingsPage" style="display: none;">
+            <div class="header">
+                <button id="backBtn" class="btn-icon back-btn">
+                    <img src="icons/back.svg" alt="Back">
+                </button>
+            </div>
+            <h2 class="popup-title">Settings</h2>
+            <div class="settings-content">
+                <h3>Update Price Every</h3>
+                <div class="input-row">
+                    <div class="input-group">
+                        <input type="number" id="priceRefreshTime" placeholder="Frequency">
+                    </div>
+                    <div class="input-group">
+                        <select id="timeUnit">
+                            <option value="seconds">Seconds</option>
+                            <option value="minutes">Minutes</option>
+                            <option value="hours">Hours</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
     <script type="module" src="popup.js"></script>
 </body>
