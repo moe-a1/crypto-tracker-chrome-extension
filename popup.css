@@ -29,7 +29,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    margin-bottom: 15px;
+    margin-bottom: 25px;
+}
+
+#settingsPage .header {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #444;
 }
 
 .settings-btn {
