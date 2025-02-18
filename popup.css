@@ -20,26 +20,20 @@ body {
 .popup-title {
     font-family: 'Orbitron', sans-serif;
     font-size: 20px;
-    margin-bottom: 15px;
     color: #fff;
-    text-align: center;
     flex: 1;
+    margin: 0;
 }
 
 .header {
     display: flex;
     align-items: center;
-    gap: 10px;
     justify-content: flex-end;
+    margin-bottom: 15px;
 }
 
 .settings-btn {
     padding: 5px;
-}
-
-.popup-title {
-    text-align: center;
-    margin-top: 10px;
 }
 
 .input-row {
