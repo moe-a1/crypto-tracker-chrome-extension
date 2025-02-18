@@ -53,5 +53,25 @@ export function resetBadge() {
 
 // alarm function
 export function startAlarmTracking() {
-    chrome.alarms.create("refreshPrices", { periodInMinutes: 1 });
+    chrome.storage.local.get(["priceRefreshTime", "timeUnit"], (data) => {
+        let priceRefreshTime = data.priceRefreshTime || 1;
+        let timeUnit = data.timeUnit || "minutes";
+        let periodInMinutes;
+
+        switch (timeUnit) {
+            case "seconds":
+                periodInMinutes = priceRefreshTime / 60;
+                break;
+            case "minutes":
+                periodInMinutes = priceRefreshTime;
+                break;
+            case "hours":
+                periodInMinutes = priceRefreshTime * 60;
+                break;
+            default:
+                periodInMinutes = 1;
+        }
+        
+        chrome.alarms.create("refreshPrices", { periodInMinutes });
+    });
 }

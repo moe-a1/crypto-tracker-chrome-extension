@@ -23,6 +23,23 @@ body {
     margin-bottom: 15px;
     color: #fff;
     text-align: center;
+    flex: 1;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.settings-btn {
+    padding: 5px;
+}
+
+.popup-title {
+    text-align: center;
+    margin-top: 10px;
 }
 
 .input-row {
